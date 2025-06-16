@@ -9,10 +9,10 @@ const Index = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center p-4">
       <main className="flex-grow flex flex-col items-center justify-center">
         <h1 className="text-5xl md:text-7xl font-bold text-gray-800 mb-4 animate-fade-in-down">
-          Brand Your Visuals
+          Make your Reduct screenshots shine
         </h1>
         <p className="text-lg md:text-xl text-gray-500 mb-8 max-w-2xl animate-fade-in-up">
-          Instantly add beautiful, branded borders to your PNGs and GIFs. Simple, fast, and ready to share.
+          Sajau helps you instantly decorate and beautify your Reduct screenshots with clean, branded borders. Just upload, select a preset style, and export.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/editor">
