@@ -1,4 +1,3 @@
-
 import { StylePreset } from '@/pages/Editor';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -75,7 +74,7 @@ const StylePresetSelector = ({ stylePreset, setStylePreset }: StylePresetSelecto
     return (
         <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700">Image Position</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-3 gap-2">
                 {stylePresets.map((preset) => (
                     <button
                         key={preset.value}

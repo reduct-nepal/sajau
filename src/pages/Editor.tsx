@@ -88,7 +88,7 @@ const Editor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100" onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
       <input
         type="file"
         ref={fileInputRef}
@@ -97,7 +97,7 @@ const Editor = () => {
         accept="image/png"
       />
       
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl flex-grow flex flex-col overflow-auto">
         <header className="mb-6">
           <Link to="/" className="text-primary hover:underline flex items-center text-sm font-medium">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -105,8 +105,8 @@ const Editor = () => {
           </Link>
         </header>
         
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          <div className="xl:col-span-1 order-2 xl:order-1">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 flex-grow">
+          <div className="xl:col-span-2 order-2 xl:order-1">
             <Controls
               setPadding={setPadding}
               padding={padding}
@@ -117,7 +117,7 @@ const Editor = () => {
             />
           </div>
           
-          <div className="xl:col-span-3 order-1 xl:order-2 flex items-start">
+          <div className="xl:col-span-3 order-1 xl:order-2 flex items-start justify-center w-full">
             <ImagePreview 
               image={image} 
               padding={padding} 

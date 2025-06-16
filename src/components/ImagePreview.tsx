@@ -1,4 +1,3 @@
-
 import { forwardRef, useEffect } from 'react';
 import { PaddingValue, StylePreset } from '@/pages/Editor';
 import { Upload } from 'lucide-react';
@@ -108,12 +107,13 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(({ image, pad
     }, [image, ref]);
 
     return (
-        <div className="flex justify-start items-start">
+        <div className="flex justify-center items-start px-4 md:px-0 w-full">
             <div
                 ref={ref}
                 onClick={onClick}
                 className={cn(
                     "bg-branded-bg border border-branded-border transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg",
+                    "max-w-full", // Ensure the preview container itself doesn't exceed its parent's width
                     isDragging && "ring-4 ring-primary/20 border-primary"
                 )}
                 style={{ 
@@ -125,16 +125,16 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(({ image, pad
                     <img
                         src={image}
                         alt="User screenshot"
-                        className="max-w-full object-contain"
+                        className="w-full object-contain md:max-w-[600px]"
                         style={{ 
                             borderRadius: styleConfig.innerBorderRadius,
-                            maxWidth: '600px',
-                            maxHeight: '400px'
+                            maxWidth: '100%',
+                            maxHeight: 'min(400px, 70vh)'
                         }}
                     />
                 ) : (
                     <div
-                        className="w-[500px] h-[300px] bg-white/50 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
+                        className="w-full h-[300px] bg-white/50 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors md:w-[500px]"
                         style={{ borderRadius: styleConfig.innerBorderRadius }}
                     >
                         <div className="flex flex-col items-center gap-3">
