@@ -1,7 +1,7 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { SparklesText } from '@/components/ui/sparkles-text';
 
 const Index = () => {
   return (
@@ -22,12 +22,25 @@ const Index = () => {
           </svg>
         </div>
 
-        {/* Main heading */}
-        <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold text-gray-900 mb-6 leading-tight">
-          Make your Reduct 
-          <br />
-          <span className="text-[#F0BC00]">screenshots shine</span>
-        </h1>
+        {/* Main heading with SparklesText */}
+        <div className="mb-6">
+          <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold text-gray-900 leading-tight">
+            Make your{" "}
+            Reduct{" "}
+            <SparklesText 
+              text="screenshots" 
+              className="inline-block text-inherit"
+              colors={{ first: "#F0BC00", second: "#FFD700" }}
+              sparklesCount={8}
+            />{" "}
+            <SparklesText 
+              text="shine" 
+              className="inline-block text-inherit"
+              colors={{ first: "#F0BC00", second: "#FFD700" }}
+              sparklesCount={8}
+            />
+          </h1>
+        </div>
 
         {/* Subheading */}
         <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl leading-relaxed">
