@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -53,8 +52,8 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-                'branded-bg': 'hsl(var(--branded-bg))',
-                'branded-border': 'hsl(var(--branded-border))',
+				'branded-bg': 'hsl(var(--branded-bg))',
+				'branded-border': 'hsl(var(--branded-border))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -87,11 +86,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				aurora: {
+					from: {
+						backgroundPosition: "50% 50%, 50% 50%",
+					},
+					to: {
+						backgroundPosition: "350% 50%, 350% 50%",
+					},
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				aurora: "aurora 60s linear infinite",
 			}
 		}
 	},
