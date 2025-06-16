@@ -1,7 +1,10 @@
-import { forwardRef } from 'react';
+
+import { forwardRef, useEffect } from 'react';
 import { PaddingValue, StylePreset } from '@/pages/Editor';
 import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toPng } from 'html-to-image';
+import { toast } from '@/components/ui/sonner';
 
 interface ImagePreviewProps {
     image: string | null;
@@ -75,13 +78,42 @@ const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
 const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(({ image, padding, stylePreset, isDragging, onClick }, ref) => {
     const styleConfig = getStyleConfig(stylePreset, padding);
 
+    useEffect(() => {
+        const handleKeyDown = async (event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'c' && image && ref && 'current' in ref && ref.current) {
+                event.preventDefault();
+                try {
+                    const dataUrl = await toPng(ref.current, { 
+                        cacheBust: true, 
+                        pixelRatio: 2,
+                        style: {
+                            boxShadow: 'none'
+                        }
+                    });
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    toast("Image copied to clipboard!");
+                    console.log('Image copied to clipboard via Ctrl+C');
+                } catch (err) {
+                    console.error('Failed to copy image via Ctrl+C:', err);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [image, ref]);
+
     return (
-        <div className="h-full flex items-center justify-center p-4">
+        <div className="flex justify-start items-start">
             <div
                 ref={ref}
                 onClick={onClick}
                 className={cn(
-                    "bg-branded-bg border border-branded-border transition-all duration-300 ease-in-out shadow-lg cursor-pointer hover:shadow-xl",
+                    "bg-branded-bg border border-branded-border transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg",
                     isDragging && "ring-4 ring-primary/20 border-primary"
                 )}
                 style={{ 
@@ -93,12 +125,16 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(({ image, pad
                     <img
                         src={image}
                         alt="User screenshot"
-                        className="max-w-[50vw] max-h-[50vh] object-contain"
-                        style={{ borderRadius: styleConfig.innerBorderRadius }}
+                        className="max-w-full object-contain"
+                        style={{ 
+                            borderRadius: styleConfig.innerBorderRadius,
+                            maxWidth: '600px',
+                            maxHeight: '400px'
+                        }}
                     />
                 ) : (
                     <div
-                        className="w-[50vw] max-w-[500px] h-[35vh] max-h-[250px] bg-white/50 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
+                        className="w-[500px] h-[300px] bg-white/50 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
                         style={{ borderRadius: styleConfig.innerBorderRadius }}
                     >
                         <div className="flex flex-col items-center gap-3">

@@ -75,13 +75,13 @@ const StylePresetSelector = ({ stylePreset, setStylePreset }: StylePresetSelecto
     return (
         <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700">Image Position</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2">
                 {stylePresets.map((preset) => (
                     <button
                         key={preset.value}
                         onClick={() => setStylePreset(preset.value)}
                         className={cn(
-                            "flex items-center gap-2 p-2 rounded-lg border-2 transition-all hover:bg-gray-50",
+                            "flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all hover:bg-gray-50",
                             stylePreset === preset.value
                                 ? "border-primary bg-primary/5 shadow-sm"
                                 : "border-gray-200"
@@ -91,7 +91,7 @@ const StylePresetSelector = ({ stylePreset, setStylePreset }: StylePresetSelecto
                         <div className="w-5 h-5 flex-shrink-0">
                             {preset.icon}
                         </div>
-                        <span className="text-xs font-medium text-gray-600">{preset.label}</span>
+                        <span className="text-xs font-medium text-gray-600 text-center">{preset.label}</span>
                     </button>
                 ))}
             </div>

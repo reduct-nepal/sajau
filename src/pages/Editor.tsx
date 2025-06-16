@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import ImagePreview from "@/components/ImagePreview";
 import Controls from "@/components/Controls";
@@ -89,7 +88,7 @@ const Editor = () => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden" onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
       <input
         type="file"
         ref={fileInputRef}
@@ -98,15 +97,15 @@ const Editor = () => {
         accept="image/png"
       />
       
-      <div className="container mx-auto px-4 py-4 max-w-7xl h-full flex flex-col">
-        <header className="mb-4 flex-shrink-0">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <header className="mb-6">
           <Link to="/" className="text-primary hover:underline flex items-center text-sm font-medium">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Link>
         </header>
         
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 flex-1 min-h-0">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           <div className="xl:col-span-1 order-2 xl:order-1">
             <Controls
               setPadding={setPadding}
@@ -118,7 +117,7 @@ const Editor = () => {
             />
           </div>
           
-          <div className="xl:col-span-3 order-1 xl:order-2 min-h-0">
+          <div className="xl:col-span-3 order-1 xl:order-2 flex items-start">
             <ImagePreview 
               image={image} 
               padding={padding} 
