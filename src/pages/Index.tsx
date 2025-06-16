@@ -34,9 +34,6 @@ const Index = () => {
             </div>
         </div>
       </main>
-      <footer className="py-4">
-        <p className="text-sm text-gray-400">Built with ❤️ by Lovable</p>
-      </footer>
     </div>
   );
 };
