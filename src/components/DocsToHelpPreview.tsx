@@ -1,17 +1,30 @@
 import { forwardRef, useEffect } from 'react';
-import { PaddingValue, StylePreset } from '@/pages/Editor';
 import { Upload } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
 import { toast } from '@/components/ui/sonner';
 
-interface ImagePreviewProps {
+export type PaddingValue = "11px" | "22px" | "44px";
+export type StylePreset = "centered" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+interface DocsToHelpPreviewProps {
     image: string | null;
     padding: PaddingValue;
     stylePreset: StylePreset;
     isDragging: boolean;
     onClick: () => void;
+    colorOption: string;
 }
+
+const FRAME_COLORS: Record<string, { bg: string; border: string; }> = {
+    light:  {
+        bg: '#FFDDC6',
+        border: '#FFD1B3',
+    },
+    bright: {
+        bg: '#FF4D00',
+        border: '#FFFFFF',
+    },
+};
 
 const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
     const paddingValue = parseInt(padding);
@@ -35,44 +48,45 @@ const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
             return {
                 containerPadding: padding,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: paddingValue === 11 ? '11px' : paddingValue === 22 ? '11px' : paddingValue === 44 ? '32px' : `${Math.max(0, paddingValue - 4)}px`
+                innerBorderRadius: paddingValue === 11 ? '11px' : paddingValue === 22 ? '11px' : paddingValue === 44 ? '32px' : `${Math.max(0, paddingValue - 4)}px`,
             };
         case 'top-left':
             return {
                 containerPadding: `0 ${padding} ${padding} 0`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${mainRadius}px 0 ${smallerRadius}px 0`
+                innerBorderRadius: `${mainRadius}px 0 ${smallerRadius}px 0`,
             };
         case 'top-right':
             return {
                 containerPadding: `0 0 ${padding} ${padding}`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `0 ${mainRadius}px 0 ${smallerRadius}px`
+                innerBorderRadius: `0 ${mainRadius}px 0 ${smallerRadius}px`,
             };
         case 'bottom-left':
             return {
                 containerPadding: `${padding} ${padding} 0 0`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `0 ${smallerRadius}px 0 ${mainRadius}px`
+                innerBorderRadius: `0 ${smallerRadius}px 0 ${mainRadius}px`,
             };
         case 'bottom-right':
             return {
                 containerPadding: `${padding} 0 0 ${padding}`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${smallerRadius}px 0 ${mainRadius}px 0`
+                innerBorderRadius: `${smallerRadius}px 0 ${mainRadius}px 0`,
             };
         default:
             return {
                 containerPadding: padding,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${containerRadius - paddingValue}px`
+                innerBorderRadius: `${containerRadius - paddingValue}px`,
             };
     }
 };
 
-const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
-    ({ image, padding, stylePreset, isDragging, onClick }, ref) => {
+const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
+    ({ image, padding, stylePreset, isDragging, onClick, colorOption }, ref) => {
         const styleConfig = getStyleConfig(stylePreset, padding);
+        const frame = FRAME_COLORS[colorOption] ?? FRAME_COLORS.bright;
 
         useEffect(() => {
             const handleKeyDown = async (event: KeyboardEvent) => {
@@ -91,7 +105,7 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                         ]);
                         toast("Image copied to clipboard!");
                     } catch (err) {
-                        // silent fail
+                        // Optional: show error
                     }
                 }
             };
@@ -104,14 +118,17 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                 <div
                     ref={ref}
                     onClick={onClick}
-                    className={cn(
-                        'bg-branded-bg border border-branded-border transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg',
-                        'max-w-full',
-                        isDragging && 'ring-4 ring-primary/20 border-primary'
-                    )}
+                    className={[
+                        'transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg',
+                        isDragging ? 'ring-4 ring-primary/20 border-primary' : ''
+                    ].join(' ')}
                     style={{
+                        background: frame.bg,
+                        border: `1px solid ${frame.border}`,
                         padding: styleConfig.containerPadding,
-                        borderRadius: styleConfig.containerBorderRadius
+                        borderRadius: styleConfig.containerBorderRadius,
+                        maxWidth: '100%',
+                        boxSizing: 'border-box'
                     }}
                 >
                     {image ? (
@@ -120,6 +137,7 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                             alt="User screenshot"
                             className="w-full object-contain md:max-w-[600px]"
                             style={{
+                                background: '#FFF',
                                 borderRadius: styleConfig.innerBorderRadius,
                                 maxWidth: '100%',
                                 maxHeight: 'min(400px, 70vh)'
@@ -127,14 +145,18 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                         />
                     ) : (
                         <div
-                            className="w-full h-[300px] bg-white/50 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors md:w-[500px]"
-                            style={{ borderRadius: styleConfig.innerBorderRadius }}
+                            className="w-full h-[300px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors md:w-[500px]"
+                            style={{
+                                borderRadius: styleConfig.innerBorderRadius,
+                                background: 'rgba(255,255,255,0.95)',
+                                color: '#222',
+                            }}
                         >
                             <div className="flex flex-col items-center gap-3">
                                 <Upload size={32} strokeWidth={1.5} />
                                 <div className="text-center">
-                                    <p className="text-base font-medium">Click to upload a PNG</p>
-                                    <p className="text-xs text-gray-500 mt-1">or drag and drop, or paste from clipboard</p>
+                                    <p className="text-base font-semibold">Click to upload a PNG</p>
+                                    <p className="text-xs mt-1">or drag and drop, or paste from clipboard</p>
                                 </div>
                             </div>
                         </div>
@@ -145,4 +167,4 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
     }
 );
 
-export default ImagePreview;
+export default DocsToHelpPreview;

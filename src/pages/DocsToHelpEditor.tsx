@@ -1,6 +1,6 @@
 // Clone of Editor.tsx for /docs-to-help/editor
 import { useState, useRef, useEffect } from "react";
-import ImagePreview from "@/components/ImagePreview";
+import DocsToHelpPreview from "@/components/DocsToHelpPreview";
 import Controls from "@/components/Controls";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -8,23 +8,19 @@ import { ArrowLeft } from "lucide-react";
 export type PaddingValue = "11px" | "22px" | "44px";
 export type StylePreset = "centered" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
+const COLOR_OPTIONS = [
+  { label: "Light", value: "light", bg: "#FFDDC6", border: "#FFD1B3" },
+  { label: "Bright", value: "bright", bg: "#FF4D00", border: "#FF4D00" },
+];
+
 const DocsToHelpEditor = () => {
   const [image, setImage] = useState<string | null>(null);
   const [padding, setPadding] = useState<PaddingValue>("22px");
   const [stylePreset, setStylePreset] = useState<StylePreset>("centered");
+  const [colorOption, setColorOption] = useState("bright");
   const previewRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  // Set default branded color to #FF4D00 via CSS variables for this page
-  useEffect(() => {
-    document.documentElement.style.setProperty('--branded-bg', '16 100% 50.2%'); // #FF4D00 in HSL
-    document.documentElement.style.setProperty('--branded-border', '16 55% 98%'); // darker border version
-    return () => {
-      document.documentElement.style.removeProperty('--branded-bg');
-      document.documentElement.style.removeProperty('--branded-border');
-    };
-  }, []);
 
   const handleFile = (file: File) => {
     if (file && file.type === "image/png") {
@@ -123,16 +119,19 @@ const DocsToHelpEditor = () => {
               setStylePreset={setStylePreset}
               image={image}
               previewRef={previewRef}
+              colorOption={colorOption}
+              setColorOption={setColorOption}
             />
           </div>
           <div className="xl:col-span-3 order-1 xl:order-2 flex items-start justify-center w-full">
-            <ImagePreview
+            <DocsToHelpPreview
               image={image}
               padding={padding}
               stylePreset={stylePreset}
               ref={previewRef}
               isDragging={isDragging}
               onClick={handleClick}
+              colorOption={colorOption}
             />
           </div>
         </div>

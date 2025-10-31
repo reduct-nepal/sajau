@@ -14,9 +14,20 @@ interface ControlsProps {
     setStylePreset: (preset: StylePreset) => void;
     image: string | null;
     previewRef: React.RefObject<HTMLDivElement>;
+    colorOption?: string;
+    setColorOption?: (option: string) => void;
 }
 
-const Controls = ({ setPadding, padding, stylePreset, setStylePreset, image, previewRef }: ControlsProps) => {
+const Controls = ({
+  setPadding,
+  padding,
+  stylePreset,
+  setStylePreset,
+  image,
+  previewRef,
+  colorOption,
+  setColorOption,
+}: ControlsProps) => {
     const handleDownload = () => {
         if (previewRef.current) {
             toPng(previewRef.current, { 
@@ -102,6 +113,21 @@ const Controls = ({ setPadding, padding, stylePreset, setStylePreset, image, pre
                         stylePreset={stylePreset}
                         setStylePreset={setStylePreset}
                     />
+
+                    {colorOption !== undefined && setColorOption && (
+                      <div className="space-y-2 pt-2">
+                        <Label className="text-sm font-semibold text-gray-700">Color</Label>
+                        <div className="flex gap-4">
+                          <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'light' ? 'border-orange-400 bg-orange-100' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('light')}>
+                            Light <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FFDDC6', border: '1px solid #FFD1B3' }}></span>
+                          </button>
+                          <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'bright' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('bright')}>
+                            Bright <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FF4D00', border: '1px solid #FF4D00' }}></span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                 </div>
             </div>
         </div>
