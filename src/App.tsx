@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Editor from "./pages/Editor";
 import VideoToGif from "./pages/VideoToGif";
 import NotFound from "./pages/NotFound";
+import DocsToHelpIndex from "./pages/DocsToHelpIndex";
+import DocsToHelpEditor from "./pages/DocsToHelpEditor";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +23,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/gif-editor" element={<VideoToGif />} />
+          <Route path="/docs-to-help" element={<DocsToHelpIndex />} />
+          <Route path="/docs-to-help/editor" element={<DocsToHelpEditor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
