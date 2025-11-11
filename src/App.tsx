@@ -10,6 +10,8 @@ import VideoToGif from "./pages/VideoToGif";
 import NotFound from "./pages/NotFound";
 import DocsToHelpIndex from "./pages/DocsToHelpIndex";
 import DocsToHelpEditor from "./pages/DocsToHelpEditor";
+import TiggIndex from "./pages/TiggIndex";
+import TiggEditor from "./pages/TiggEditor";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/gif-editor" element={<VideoToGif />} />
           <Route path="/docs-to-help" element={<DocsToHelpIndex />} />
           <Route path="/docs-to-help/editor" element={<DocsToHelpEditor />} />
+          <Route path="/tigg" element={<TiggIndex />} />
+          <Route path="/tigg/editor" element={<TiggEditor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

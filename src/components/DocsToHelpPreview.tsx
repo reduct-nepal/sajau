@@ -13,9 +13,10 @@ interface DocsToHelpPreviewProps {
     isDragging: boolean;
     onClick: () => void;
     colorOption: string;
+    frameColors?: Record<string, { bg: string; border: string }>;
 }
 
-const FRAME_COLORS: Record<string, { bg: string; border: string; }> = {
+const DEFAULT_FRAME_COLORS: Record<string, { bg: string; border: string }> = {
     light:  {
         bg: '#FFDDC6',
         border: '#FFD1B3',
@@ -84,9 +85,10 @@ const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
 };
 
 const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
-    ({ image, padding, stylePreset, isDragging, onClick, colorOption }, ref) => {
+    ({ image, padding, stylePreset, isDragging, onClick, colorOption, frameColors }, ref) => {
         const styleConfig = getStyleConfig(stylePreset, padding);
-        const frame = FRAME_COLORS[colorOption] ?? FRAME_COLORS.bright;
+        const colors = frameColors ?? DEFAULT_FRAME_COLORS;
+        const frame = colors[colorOption] ?? colors.bright;
 
         useEffect(() => {
             const handleKeyDown = async (event: KeyboardEvent) => {

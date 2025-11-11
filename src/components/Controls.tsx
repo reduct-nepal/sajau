@@ -16,6 +16,7 @@ interface ControlsProps {
     previewRef: React.RefObject<HTMLDivElement>;
     colorOption?: string;
     setColorOption?: (option: string) => void;
+    colorOptions?: { label: string; value: string; bg: string; border: string }[];
 }
 
 const Controls = ({
@@ -27,6 +28,7 @@ const Controls = ({
   previewRef,
   colorOption,
   setColorOption,
+  colorOptions,
 }: ControlsProps) => {
     const handleDownload = () => {
         if (previewRef.current) {
@@ -70,6 +72,17 @@ const Controls = ({
                 console.error('Failed to copy image:', err);
             }
         }
+    };
+
+    // Choose readable text color (black or white) for a given hex background
+    const readableTextOn = (hex: string) => {
+        const clean = hex.replace('#', '');
+        const r = parseInt(clean.substring(0, 2), 16);
+        const g = parseInt(clean.substring(2, 4), 16);
+        const b = parseInt(clean.substring(4, 6), 16);
+        // relative luminance approximation
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        return luminance > 0.6 ? '#111827' : '#FFFFFF'; // gray-900 vs white
     };
 
     return (
@@ -118,12 +131,33 @@ const Controls = ({
                       <div className="space-y-2 pt-2">
                         <Label className="text-sm font-semibold text-gray-700">Color</Label>
                         <div className="flex gap-4">
-                          <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'light' ? 'border-orange-400 bg-orange-100' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('light')}>
-                            Light <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FFDDC6', border: '1px solid #FFD1B3' }}></span>
-                          </button>
-                          <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'bright' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('bright')}>
-                            Bright <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FF4D00', border: '1px solid #FF4D00' }}></span>
-                          </button>
+                          {colorOptions ? (
+                            colorOptions.map(opt => {
+                              const isActive = colorOption === opt.value;
+                              const style: React.CSSProperties = {
+                                border: isActive ? `2px solid ${opt.border}` : undefined,
+                                background: isActive ? opt.bg : undefined,
+                                color: isActive ? readableTextOn(opt.bg) : undefined,
+                              };
+                              return (
+                                <button key={opt.value} type="button"
+                                  className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${isActive ? '' : 'border-gray-200 bg-white'}`}
+                                  style={style}
+                                  onClick={() => setColorOption(opt.value)}>
+                                  {opt.label} <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: opt.bg, border: `1px solid ${opt.border}` }}></span>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <>
+                              <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'light' ? 'border-orange-400 bg-orange-100' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('light')}>
+                                Light <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FFDDC6', border: '1px solid #FFD1B3' }}></span>
+                              </button>
+                              <button type="button" className={`flex-1 rounded-lg border px-4 py-2 font-medium text-sm transition-colors focus:outline-none ${colorOption === 'bright' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`} onClick={() => setColorOption('bright')}>
+                                Bright <span className="ml-1 inline-block rounded-full w-4 h-4 align-middle" style={{ background: '#FF4D00', border: '1px solid #FF4D00' }}></span>
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
