@@ -12,6 +12,7 @@ import DocsToHelpIndex from "./pages/DocsToHelpIndex";
 import DocsToHelpEditor from "./pages/DocsToHelpEditor";
 import TiggIndex from "./pages/TiggIndex";
 import TiggEditor from "./pages/TiggEditor";
+import ProgramizEditor from "./pages/ProgramizEditor";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/docs-to-help/editor" element={<DocsToHelpEditor />} />
           <Route path="/tigg" element={<TiggIndex />} />
           <Route path="/tigg/editor" element={<TiggEditor />} />
+          <Route path="/programiz" element={<ProgramizEditor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
