@@ -61,7 +61,7 @@ const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
             return {
                 containerPadding: `0 0 ${padding} ${padding}`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `0 ${mainRadius}px 0 ${smallerRadius}px`,
+                innerBorderRadius: `0 0 0 ${smallerRadius}px`,
             };
         case 'bottom-left':
             return {
@@ -73,7 +73,7 @@ const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
             return {
                 containerPadding: `${padding} 0 0 ${padding}`,
                 containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${smallerRadius}px 0 ${mainRadius}px 0`,
+                innerBorderRadius: `${smallerRadius}px 0 0 0`,
             };
         default:
             return {
@@ -121,7 +121,7 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
                     ref={ref}
                     onClick={onClick}
                     className={[
-                        'transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg',
+                        'transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg overflow-hidden',
                         isDragging ? 'ring-4 ring-primary/20 border-primary' : ''
                     ].join(' ')}
                     style={{
