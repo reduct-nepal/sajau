@@ -6,126 +6,188 @@ import {
   getPaddingFfmpegValues,
   type CornerRadii,
 } from "@/lib/stylePresets";
+
 const OUT_BG_COLOR = "#FFE2CC";
+/** Reserved palette slot for transparency — unlikely to appear in UI screenshots. */
+const TRANSPARENT_KEY_RGB = [0xff, 0x00, 0xff] as const;
 
-const GIF_PIXEL_FORMAT = "rgba4444" as const;
+function uniformRadii(radius: number): CornerRadii {
+  return { tl: radius, tr: radius, br: radius, bl: radius };
+}
 
-/** Cuts the square corner regions outside the outer rounded rect to transparency. */
-function clearOuterCorners(
+function traceRoundRect(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  radius: number
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radii: CornerRadii
 ) {
-  if (radius <= 0) return;
-  const r = radius;
-  const w = width;
-  const h = height;
-
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  ctx.fillStyle = "#000";
-
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(r, 0);
-  ctx.arcTo(0, 0, 0, r, r);
+  const { tl, tr, br, bl } = radii;
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.arcTo(x + w, y, x + w, y + tr, tr);
+  ctx.lineTo(x + w, y + h - br);
+  ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+  ctx.lineTo(x + bl, y + h);
+  ctx.arcTo(x, y + h, x, y + h - bl, bl);
+  ctx.lineTo(x, y + tl);
+  ctx.arcTo(x, y, x + tl, y, tl);
   ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(w, 0);
-  ctx.lineTo(w - r, 0);
-  ctx.arcTo(w, 0, w, r, r);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(w, h);
-  ctx.lineTo(w - r, h);
-  ctx.arcTo(w, h, w, h - r, r);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(0, h);
-  ctx.lineTo(0, h - r);
-  ctx.arcTo(0, h, r, h, r);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.restore();
 }
 
-function findTransparentPaletteIndex(palette: number[][]): number {
-  return palette.findIndex((color) => (color[3] ?? 255) === 0);
-}
-
-function fillInnerCorners(
+/** Brand-colored frame drawn on top of media (outer round rect minus media cutout). */
+function drawBorderOverlay(
   ctx: CanvasRenderingContext2D,
-  px: number,
-  py: number,
-  cw: number,
-  ch: number,
-  radii: CornerRadii,
+  frameW: number,
+  frameH: number,
+  outerRadius: number,
+  mediaX: number,
+  mediaY: number,
+  mediaW: number,
+  mediaH: number,
+  innerRadii: CornerRadii,
   color: string
 ) {
   ctx.fillStyle = color;
-  const { tl, tr, br, bl } = radii;
-
-  if (tl > 0) {
-    ctx.beginPath();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px + tl, py);
-    ctx.arcTo(px, py, px, py + tl, tl);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  if (tr > 0) {
-    ctx.beginPath();
-    ctx.moveTo(px + cw, py);
-    ctx.lineTo(px + cw - tr, py);
-    ctx.arcTo(px + cw, py, px + cw, py + tr, tr);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  if (br > 0) {
-    ctx.beginPath();
-    ctx.moveTo(px + cw, py + ch);
-    ctx.lineTo(px + cw - br, py + ch);
-    ctx.arcTo(px + cw, py + ch, px + cw, py + ch - br, br);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  if (bl > 0) {
-    ctx.beginPath();
-    ctx.moveTo(px, py + ch);
-    ctx.lineTo(px, py + ch - bl);
-    ctx.arcTo(px, py + ch, px + bl, py + ch, bl);
-    ctx.closePath();
-    ctx.fill();
-  }
+  ctx.beginPath();
+  traceRoundRect(ctx, 0, 0, frameW, frameH, uniformRadii(outerRadius));
+  traceRoundRect(ctx, mediaX, mediaY, mediaW, mediaH, innerRadii);
+  ctx.fill("evenodd");
 }
 
-function roundFrameOnCanvas(
+function colorDistanceRgb(
+  r: number,
+  g: number,
+  b: number,
+  entry: number[]
+): number {
+  const dr = r - entry[0];
+  const dg = g - entry[1];
+  const db = b - entry[2];
+  return dr * dr + dg * dg + db * db;
+}
+
+function findNearestPaletteIndex(
+  r: number,
+  g: number,
+  b: number,
+  palette: number[][],
+  skipIndex: number
+): number {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < palette.length; i++) {
+    if (i === skipIndex) continue;
+    const dist = colorDistanceRgb(r, g, b, palette[i]);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
+ * Quantize to an opaque palette and assign transparency via a reserved chroma-key
+ * index. Avoids rgba4444 + oneBitAlpha, which treated anti-aliased white fringe
+ * pixels (common with large border radii) as fully transparent.
+ */
+function encodeFramePixels(imageData: ImageData): {
+  index: Uint8Array;
+  palette: number[][];
+  transparentIndex: number;
+} {
+  const { data, width, height } = imageData;
+  const pixelCount = width * height;
+  const opaqueRgba = new Uint8ClampedArray(data);
+  const transparentMask = new Uint8Array(pixelCount);
+
+  for (let p = 0; p < pixelCount; p++) {
+    const i = p * 4;
+    if (data[i + 3] === 0) {
+      transparentMask[p] = 1;
+      opaqueRgba[i] = TRANSPARENT_KEY_RGB[0];
+      opaqueRgba[i + 1] = TRANSPARENT_KEY_RGB[1];
+      opaqueRgba[i + 2] = TRANSPARENT_KEY_RGB[2];
+      opaqueRgba[i + 3] = 255;
+    } else {
+      // Snap anti-aliased fringe to fully opaque so it is not dropped later.
+      opaqueRgba[i + 3] = 255;
+    }
+  }
+
+  // Leave one slot for the reserved transparent chroma key if needed.
+  let palette = quantize(opaqueRgba, 255, { format: "rgb565" });
+
+  let transparentIndex = palette.findIndex(
+    (c) =>
+      c[0] === TRANSPARENT_KEY_RGB[0] &&
+      c[1] === TRANSPARENT_KEY_RGB[1] &&
+      c[2] === TRANSPARENT_KEY_RGB[2]
+  );
+  if (transparentIndex < 0) {
+    transparentIndex = palette.length;
+    palette = [...palette, [...TRANSPARENT_KEY_RGB]];
+  }
+
+  const index = applyPalette(opaqueRgba, palette, "rgb565");
+
+  for (let p = 0; p < pixelCount; p++) {
+    const i = p * 4;
+    if (transparentMask[p]) {
+      index[p] = transparentIndex;
+    } else if (index[p] === transparentIndex) {
+      index[p] = findNearestPaletteIndex(
+        data[i],
+        data[i + 1],
+        data[i + 2],
+        palette,
+        transparentIndex
+      );
+    }
+  }
+
+  return { index, palette, transparentIndex };
+}
+
+function composeBrandedFrame(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  px: number,
-  py: number,
-  wPad: number,
-  hPad: number,
+  frameW: number,
+  frameH: number,
+  media: CanvasImageSource,
+  mediaX: number,
+  mediaY: number,
+  mediaW: number,
+  mediaH: number,
   outerRadius: number,
   innerRadii: CornerRadii,
-  bgColor: string
+  borderColor: string
 ) {
-  const cw = width - wPad;
-  const ch = height - hPad;
-  clearOuterCorners(ctx, width, height, outerRadius);
-  fillInnerCorners(ctx, px, py, cw, ch, innerRadii, bgColor);
+  ctx.clearRect(0, 0, frameW, frameH);
+
+  // Clip to the outer rounded rect so corners stay transparent without
+  // punching holes through media (destination-out was erasing white pixels
+  // that extended into the corner wedges on flush edges).
+  ctx.save();
+  ctx.beginPath();
+  traceRoundRect(ctx, 0, 0, frameW, frameH, uniformRadii(outerRadius));
+  ctx.clip();
+
+  ctx.drawImage(media, mediaX, mediaY, mediaW, mediaH);
+  drawBorderOverlay(
+    ctx,
+    frameW,
+    frameH,
+    outerRadius,
+    mediaX,
+    mediaY,
+    mediaW,
+    mediaH,
+    innerRadii,
+    borderColor
+  );
+  ctx.restore();
 }
 
 export function isGifCornerRoundingSupported(): boolean {
@@ -142,7 +204,10 @@ export async function applyRoundedCornersToGif(
     return gifBlob;
   }
 
-  const { w, h, x, y } = getPaddingFfmpegValues(padding, stylePreset);
+  const { w: padW, h: padH, x: mediaX, y: mediaY } = getPaddingFfmpegValues(
+    padding,
+    stylePreset
+  );
   const outerRadius = getContainerRadiusPx(padding);
   const innerRadii = getInnerRadiiPx(stylePreset, padding);
 
@@ -157,42 +222,49 @@ export async function applyRoundedCornersToGif(
   }
 
   const encoder = GIFEncoder();
-  let width = 0;
-  let height = 0;
+  let frameW = 0;
+  let frameH = 0;
 
   for (let i = 0; i < track.frameCount; i++) {
     const { image } = await decoder.decode({ frameIndex: i });
-    width = image.displayWidth;
-    height = image.displayHeight;
+    const mediaW = image.displayWidth;
+    const mediaH = image.displayHeight;
+    frameW = mediaW + padW;
+    frameH = mediaH + padH;
     const delayMs = image.duration ? Math.max(20, Math.round(image.duration / 1000)) : 42;
 
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = frameW;
+    canvas.height = frameH;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       image.close();
-      throw new Error("Could not create canvas for GIF rounding.");
+      throw new Error("Could not create canvas for GIF branding.");
     }
 
-    ctx.drawImage(image, 0, 0);
+    composeBrandedFrame(
+      ctx,
+      frameW,
+      frameH,
+      image,
+      mediaX,
+      mediaY,
+      mediaW,
+      mediaH,
+      outerRadius,
+      innerRadii,
+      bgColor
+    );
     image.close();
 
-    roundFrameOnCanvas(ctx, width, height, x, y, w, h, outerRadius, innerRadii, bgColor);
+    const imageData = ctx.getImageData(0, 0, frameW, frameH);
+    const { index, palette, transparentIndex } = encodeFramePixels(imageData);
 
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const palette = quantize(imageData.data, 256, {
-      format: GIF_PIXEL_FORMAT,
-      oneBitAlpha: true,
-    });
-    const index = applyPalette(imageData.data, palette, GIF_PIXEL_FORMAT);
-    const transparentIndex = findTransparentPaletteIndex(palette);
-
-    encoder.writeFrame(index, width, height, {
+    encoder.writeFrame(index, frameW, frameH, {
       palette,
       delay: delayMs,
-      transparent: transparentIndex >= 0,
-      transparentIndex: transparentIndex >= 0 ? transparentIndex : 0,
+      transparent: true,
+      transparentIndex,
     });
   }
 

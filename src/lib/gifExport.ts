@@ -46,12 +46,7 @@ export async function convertToBrandedGif(
   await ffmpeg.writeFile(inputFileName, await fetchFile(file));
 
   const settings = qualityPresets[options.quality];
-  const videoFilter = buildGifVideoFilter(
-    settings.scale,
-    settings.fps,
-    options.padding,
-    options.stylePreset
-  );
+  const videoFilter = buildGifVideoFilter(settings.scale, settings.fps);
 
   const command = [
     "-i",
