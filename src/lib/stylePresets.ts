@@ -1,6 +1,9 @@
 import type { PaddingValue, StylePreset } from "@/pages/Editor";
 
-export function getStyleConfig(stylePreset: StylePreset, padding: PaddingValue) {
+export function getStyleConfig(
+  stylePreset: StylePreset,
+  padding: PaddingValue,
+) {
   const paddingValue = parseInt(padding);
   const containerRadius = paddingValue;
   let mainRadius: number;
@@ -76,14 +79,14 @@ export type CornerRadii = {
   bl: number;
 };
 
-export function getContainerRadiusPx(padding: PaddingValue): number {
+export function getContainerRadiusPx(padding: PaddingValue) {
   return parseInt(padding, 10);
 }
 
 export function getInnerRadiiPx(
   stylePreset: StylePreset,
-  padding: PaddingValue
-): CornerRadii {
+  padding: PaddingValue,
+) {
   const { innerBorderRadius } = getStyleConfig(stylePreset, padding);
   const parts = innerBorderRadius
     .split(/\s+/)
@@ -102,7 +105,10 @@ export function getInnerRadiiPx(
 }
 
 /** FFmpeg pad filter values matching PNG position presets */
-export function getPaddingFfmpegValues(padding: PaddingValue, stylePreset: StylePreset) {
+export function getPaddingFfmpegValues(
+  padding: PaddingValue,
+  stylePreset: StylePreset,
+) {
   const p = parseInt(padding);
 
   switch (stylePreset) {

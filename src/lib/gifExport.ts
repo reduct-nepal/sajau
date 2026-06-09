@@ -1,7 +1,7 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import type { PaddingValue, StylePreset } from "@/pages/Editor";
 import { buildGifVideoFilter } from "@/lib/gifFilters";
+import type { PaddingValue, StylePreset } from "@/pages/Editor";
 import { applyRoundedCornersToGif } from "@/lib/gifRoundCorners";
 
 export type QualityPreset = "high" | "balanced" | "optimized";
@@ -31,8 +31,8 @@ export interface ConvertToBrandedGifOptions {
 export async function convertToBrandedGif(
   ffmpeg: FFmpeg,
   file: File,
-  options: ConvertToBrandedGifOptions
-): Promise<Blob> {
+  options: ConvertToBrandedGifOptions,
+) {
   const inputFileName = options.inputType === "gif" ? "input.gif" : "input.mp4";
   const outputFileName = "output.gif";
 
@@ -63,8 +63,6 @@ export async function convertToBrandedGif(
     outputFileName,
   ];
 
-  console.log("FFmpeg command:", command.join(" "));
-
   const exitCode = await ffmpeg.exec(command);
   if (exitCode !== 0) {
     throw new Error(`FFmpeg exited with code ${exitCode}`);
@@ -79,20 +77,26 @@ export async function convertToBrandedGif(
   try {
     await ffmpeg.deleteFile(inputFileName);
     await ffmpeg.deleteFile(outputFileName);
-  } catch {
-    // Cleanup is best-effort
+  } catch (error) {
+    console.error("Failed to delete files:", error);
+    throw error;
   }
 
-  const rectangularGif = new Blob([(data as Uint8Array).buffer], { type: "image/gif" });
+  const bytes =
+    data instanceof Uint8Array
+      ? new Uint8Array(data)
+      : new TextEncoder().encode(data);
+
+  const rectangularGif = new Blob([bytes], { type: "image/gif" });
 
   return applyRoundedCornersToGif(
     rectangularGif,
     options.padding,
-    options.stylePreset
+    options.stylePreset,
   );
 }
 
-export function getBrandedGifFilename(originalFileName: string): string {
+export function getBrandedGifFilename(originalFileName: string) {
   const base = originalFileName.replace(/\.[^.]+$/, "").trim() || "download";
   const safe =
     base

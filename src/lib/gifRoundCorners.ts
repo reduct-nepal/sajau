@@ -21,7 +21,7 @@ function traceRoundRect(
   y: number,
   w: number,
   h: number,
-  radii: CornerRadii
+  radii: CornerRadii,
 ) {
   const { tl, tr, br, bl } = radii;
   ctx.moveTo(x + tl, y);
@@ -47,7 +47,7 @@ function drawBorderOverlay(
   mediaW: number,
   mediaH: number,
   innerRadii: CornerRadii,
-  color: string
+  color: string,
 ) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -56,12 +56,7 @@ function drawBorderOverlay(
   ctx.fill("evenodd");
 }
 
-function colorDistanceRgb(
-  r: number,
-  g: number,
-  b: number,
-  entry: number[]
-): number {
+function colorDistanceRgb(r: number, g: number, b: number, entry: number[]) {
   const dr = r - entry[0];
   const dg = g - entry[1];
   const db = b - entry[2];
@@ -73,8 +68,8 @@ function findNearestPaletteIndex(
   g: number,
   b: number,
   palette: number[][],
-  skipIndex: number
-): number {
+  skipIndex: number,
+) {
   let best = 0;
   let bestDist = Infinity;
   for (let i = 0; i < palette.length; i++) {
@@ -124,7 +119,7 @@ function encodeFramePixels(imageData: ImageData): {
     (c) =>
       c[0] === TRANSPARENT_KEY_RGB[0] &&
       c[1] === TRANSPARENT_KEY_RGB[1] &&
-      c[2] === TRANSPARENT_KEY_RGB[2]
+      c[2] === TRANSPARENT_KEY_RGB[2],
   );
   if (transparentIndex < 0) {
     transparentIndex = palette.length;
@@ -143,7 +138,7 @@ function encodeFramePixels(imageData: ImageData): {
         data[i + 1],
         data[i + 2],
         palette,
-        transparentIndex
+        transparentIndex,
       );
     }
   }
@@ -162,7 +157,7 @@ function composeBrandedFrame(
   mediaH: number,
   outerRadius: number,
   innerRadii: CornerRadii,
-  borderColor: string
+  borderColor: string,
 ) {
   ctx.clearRect(0, 0, frameW, frameH);
 
@@ -185,12 +180,12 @@ function composeBrandedFrame(
     mediaW,
     mediaH,
     innerRadii,
-    borderColor
+    borderColor,
   );
   ctx.restore();
 }
 
-export function isGifCornerRoundingSupported(): boolean {
+export function isGifCornerRoundingSupported() {
   return typeof ImageDecoder !== "undefined";
 }
 
@@ -198,16 +193,18 @@ export async function applyRoundedCornersToGif(
   gifBlob: Blob,
   padding: PaddingValue,
   stylePreset: StylePreset,
-  bgColor: string = OUT_BG_COLOR
-): Promise<Blob> {
+  bgColor: string = OUT_BG_COLOR,
+) {
   if (!isGifCornerRoundingSupported()) {
     return gifBlob;
   }
 
-  const { w: padW, h: padH, x: mediaX, y: mediaY } = getPaddingFfmpegValues(
-    padding,
-    stylePreset
-  );
+  const {
+    w: padW,
+    h: padH,
+    x: mediaX,
+    y: mediaY,
+  } = getPaddingFfmpegValues(padding, stylePreset);
   const outerRadius = getContainerRadiusPx(padding);
   const innerRadii = getInnerRadiiPx(stylePreset, padding);
 
@@ -231,7 +228,9 @@ export async function applyRoundedCornersToGif(
     const mediaH = image.displayHeight;
     frameW = mediaW + padW;
     frameH = mediaH + padH;
-    const delayMs = image.duration ? Math.max(20, Math.round(image.duration / 1000)) : 42;
+    const delayMs = image.duration
+      ? Math.max(20, Math.round(image.duration / 1000))
+      : 42;
 
     const canvas = document.createElement("canvas");
     canvas.width = frameW;
@@ -253,7 +252,7 @@ export async function applyRoundedCornersToGif(
       mediaH,
       outerRadius,
       innerRadii,
-      bgColor
+      bgColor,
     );
     image.close();
 
