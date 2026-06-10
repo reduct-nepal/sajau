@@ -46,7 +46,7 @@ const Index = () => {
 
           {/* Subheading */}
           <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl leading-relaxed">
-            Sajau helps you instantly decorate and beautify your Reduct screenshots with clean, branded borders. Just upload, select a preset style, and export.
+            Sajau helps you instantly decorate and beautify your Reduct screenshots and GIFs with clean, branded borders. Upload a PNG, video, or GIF, select a style, and export.
           </p>
 
           {/* CTA Button */}
