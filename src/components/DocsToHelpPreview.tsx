@@ -1,7 +1,11 @@
-import { forwardRef, useEffect } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 import { Upload } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { toast } from '@/components/ui/sonner';
+import { copyNodeToClipboard } from '@/lib/exportImage';
+import { useAnnotations } from '@/hooks/useAnnotations';
+import { useImageContentRect } from '@/hooks/useImageContentRect';
+import AnnotationLayer from '@/components/annotations/AnnotationLayer';
+import AnnotationToolbar from '@/components/annotations/AnnotationToolbar';
 
 export type PaddingValue = "11px" | "22px" | "44px";
 export type StylePreset = "centered" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
@@ -89,22 +93,22 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
         const styleConfig = getStyleConfig(stylePreset, padding);
         const colors = frameColors ?? DEFAULT_FRAME_COLORS;
         const frame = colors[colorOption] ?? colors.bright;
+        const imgRef = useRef<HTMLImageElement>(null);
+        const annotations = useAnnotations();
+        const imageRect = useImageContentRect(imgRef, Boolean(image));
+
+        // Annotations belong to the screenshot they were drawn on.
+        const { reset } = annotations;
+        useEffect(() => {
+            reset();
+        }, [image, reset]);
 
         useEffect(() => {
             const handleKeyDown = async (event: KeyboardEvent) => {
                 if ((event.ctrlKey || event.metaKey) && event.key === 'c' && image && ref && typeof ref !== 'function' && ref.current) {
                     event.preventDefault();
                     try {
-                        const dataUrl = await toPng(ref.current, {
-                            cacheBust: true,
-                            pixelRatio: 2,
-                            style: { boxShadow: 'none' },
-                        });
-                        const response = await fetch(dataUrl);
-                        const blob = await response.blob();
-                        await navigator.clipboard.write([
-                            new ClipboardItem({ 'image/png': blob })
-                        ]);
+                        await copyNodeToClipboard(ref.current);
                         toast("Image copied to clipboard!");
                     } catch (err) {
                         // Optional: show error
@@ -116,12 +120,14 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
         }, [image, ref]);
 
         return (
-            <div className="flex justify-center items-start px-4 md:px-0 w-full">
+            <div className="flex justify-center items-start gap-4 px-4 md:px-0 w-full">
                 <div
                     ref={ref}
-                    onClick={onClick}
+                    // Once a screenshot is in place the frame is a canvas, not an upload button.
+                    onClick={image ? undefined : onClick}
                     className={[
-                        'transition-all duration-300 ease-in-out cursor-pointer hover:shadow-xl shadow-lg',
+                        'transition-all duration-300 ease-in-out hover:shadow-xl shadow-lg',
+                        image ? '' : 'cursor-pointer',
                         isDragging ? 'ring-4 ring-primary/20 border-primary' : ''
                     ].join(' ')}
                     style={{
@@ -134,17 +140,21 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
                     }}
                 >
                     {image ? (
-                        <img
-                            src={image}
-                            alt="User screenshot"
-                            className="w-full object-contain md:max-w-[600px]"
-                            style={{
-                                background: '#FFF',
-                                borderRadius: styleConfig.innerBorderRadius,
-                                maxWidth: '100%',
-                                maxHeight: 'min(400px, 70vh)'
-                            }}
-                        />
+                        <div className="relative w-full">
+                            <img
+                                ref={imgRef}
+                                src={image}
+                                alt="User screenshot"
+                                className="w-full object-contain md:max-w-[600px]"
+                                style={{
+                                    background: '#FFF',
+                                    borderRadius: styleConfig.innerBorderRadius,
+                                    maxWidth: '100%',
+                                    maxHeight: 'min(400px, 70vh)'
+                                }}
+                            />
+                            <AnnotationLayer controller={annotations} bounds={imageRect} />
+                        </div>
                     ) : (
                         <div
                             className="w-full h-[300px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors md:w-[500px]"
@@ -164,6 +174,8 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
                         </div>
                     )}
                 </div>
+
+                {image && <AnnotationToolbar controller={annotations} />}
             </div>
         );
     }

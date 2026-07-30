@@ -2,7 +2,7 @@ import { PaddingValue, StylePreset } from '@/pages/Editor';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { toPng } from 'html-to-image';
+import { captureNode, copyNodeToClipboard } from '@/lib/exportImage';
 import { Download, Copy } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import StylePresetSelector from './StylePresetSelector';
@@ -32,13 +32,7 @@ const Controls = ({
 }: ControlsProps) => {
     const handleDownload = () => {
         if (previewRef.current) {
-            toPng(previewRef.current, { 
-                cacheBust: true, 
-                pixelRatio: 2,
-                style: {
-                    boxShadow: 'none' // Remove shadow from export
-                }
-            })
+            captureNode(previewRef.current)
                 .then((dataUrl) => {
                     const link = document.createElement('a');
                     link.download = 'branded-screenshot.png';
@@ -54,18 +48,7 @@ const Controls = ({
     const handleCopy = async () => {
         if (previewRef.current) {
             try {
-                const dataUrl = await toPng(previewRef.current, { 
-                    cacheBust: true, 
-                    pixelRatio: 2,
-                    style: {
-                        boxShadow: 'none' // Remove shadow from export
-                    }
-                });
-                const response = await fetch(dataUrl);
-                const blob = await response.blob();
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
+                await copyNodeToClipboard(previewRef.current);
                 toast("Image copied to clipboard!");
                 console.log('Image copied to clipboard');
             } catch (err) {
