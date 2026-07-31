@@ -24,7 +24,13 @@ import { ContentRect } from '@/hooks/useImageContentRect';
 import NumberArrowMarker from './NumberArrowMarker';
 
 const SELECTION_COLOR = '#2F6FED';
+/** Drawn size of a resize handle. */
 const HANDLE_SIZE = 10;
+/** Invisible grab area around each handle — comfortably clickable, same look. */
+const HIT_SIZE = 24;
+const ROTATE_DOT_SIZE = 12;
+const ROTATE_HIT_SIZE = 34;
+const DELETE_SIZE = 18;
 const ROTATE_OFFSET = 26;
 const STROKE_WIDTH = 3;
 
@@ -408,40 +414,53 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                                                 width: 1,
                                                 height: ROTATE_OFFSET,
                                                 background: SELECTION_COLOR,
+                                                // Never intercept the rotate grab.
+                                                pointerEvents: 'none',
                                             }}
                                         />
+                                        {/* Generous grab area around a small dot: the whole band
+                                            above the shape rotates, so a near miss never lands on
+                                            the canvas and drops a new annotation. */}
                                         <div
                                             title="Drag to rotate (hold Shift to snap)"
-                                            className="absolute rounded-full"
+                                            className="absolute flex items-center justify-center"
                                             style={{
                                                 left: '50%',
                                                 top: -ROTATE_OFFSET,
-                                                width: HANDLE_SIZE + 2,
-                                                height: HANDLE_SIZE + 2,
-                                                marginLeft: -(HANDLE_SIZE + 2) / 2,
-                                                marginTop: -(HANDLE_SIZE + 2) / 2,
-                                                background: '#FFFFFF',
-                                                border: `1.5px solid ${SELECTION_COLOR}`,
+                                                width: ROTATE_HIT_SIZE,
+                                                height: ROTATE_HIT_SIZE,
+                                                marginLeft: -ROTATE_HIT_SIZE / 2,
+                                                marginTop: -ROTATE_HIT_SIZE / 2,
                                                 cursor: 'grab',
                                                 touchAction: 'none',
                                             }}
                                             onPointerDown={(event) => startRotate(event, annotation)}
-                                        />
+                                        >
+                                            <div
+                                                className="rounded-full"
+                                                style={{
+                                                    width: ROTATE_DOT_SIZE,
+                                                    height: ROTATE_DOT_SIZE,
+                                                    background: '#FFFFFF',
+                                                    border: `1.5px solid ${SELECTION_COLOR}`,
+                                                    pointerEvents: 'none',
+                                                }}
+                                            />
+                                        </div>
                                     </>
                                 )}
 
                                 <button
                                     type="button"
                                     title="Delete"
-                                    className="absolute flex items-center justify-center rounded-full text-white"
+                                    className="absolute flex items-center justify-center"
                                     style={{
                                         left: '100%',
                                         top: -ROTATE_OFFSET,
-                                        width: 18,
-                                        height: 18,
-                                        marginLeft: -9,
-                                        marginTop: -9,
-                                        background: ANNOTATION_COLOR,
+                                        width: HIT_SIZE,
+                                        height: HIT_SIZE,
+                                        marginLeft: -HIT_SIZE / 2,
+                                        marginTop: -HIT_SIZE / 2,
                                         cursor: 'pointer',
                                     }}
                                     onPointerDown={stop}
@@ -450,27 +469,45 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                                         controller.remove(annotation.id);
                                     }}
                                 >
-                                    <X size={12} strokeWidth={3} />
+                                    <span
+                                        className="flex items-center justify-center rounded-full text-white"
+                                        style={{
+                                            width: DELETE_SIZE,
+                                            height: DELETE_SIZE,
+                                            background: ANNOTATION_COLOR,
+                                            pointerEvents: 'none',
+                                        }}
+                                    >
+                                        <X size={12} strokeWidth={3} />
+                                    </span>
                                 </button>
 
                                 {handles.map((handle) => (
                                     <div
                                         key={handle}
-                                        className="absolute"
+                                        className="absolute flex items-center justify-center"
                                         style={{
                                             ...HANDLE_POSITION[handle],
-                                            width: HANDLE_SIZE,
-                                            height: HANDLE_SIZE,
-                                            marginLeft: -HANDLE_SIZE / 2,
-                                            marginTop: -HANDLE_SIZE / 2,
-                                            background: '#FFFFFF',
-                                            border: `1.5px solid ${SELECTION_COLOR}`,
-                                            borderRadius: 2,
+                                            width: HIT_SIZE,
+                                            height: HIT_SIZE,
+                                            marginLeft: -HIT_SIZE / 2,
+                                            marginTop: -HIT_SIZE / 2,
                                             cursor: HANDLE_CURSOR[handle],
                                             touchAction: 'none',
                                         }}
                                         onPointerDown={(event) => startResize(event, annotation, handle)}
-                                    />
+                                    >
+                                        <div
+                                            style={{
+                                                width: HANDLE_SIZE,
+                                                height: HANDLE_SIZE,
+                                                background: '#FFFFFF',
+                                                border: `1.5px solid ${SELECTION_COLOR}`,
+                                                borderRadius: 2,
+                                                pointerEvents: 'none',
+                                            }}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         )}

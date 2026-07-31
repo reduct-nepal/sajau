@@ -250,7 +250,7 @@ const Editor = () => {
         <header className="mb-6">
           <Link
             to="/"
-            className="text-primary hover:underline flex items-center text-sm font-medium"
+            className="text-primary hover:underline inline-flex w-fit items-center text-sm font-medium"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
