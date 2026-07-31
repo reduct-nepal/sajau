@@ -79,25 +79,72 @@ export const rotatedExtents = (width: number, height: number, rotation: number) 
     return { hw: (width * c + height * s) / 2, hh: (width * s + height * c) / 2 };
 };
 
+/**
+ * What a shape turns around. Boxes spin about their centre; a numbered marker
+ * spins about its badge, so the badge stays put and only the arrow sweeps.
+ */
+export type PivotMode = 'center' | 'badge';
+
+export const pivotOf = (width: number, height: number, mode: PivotMode = 'center') =>
+    mode === 'badge' ? { x: width - height / 2, y: height / 2 } : { x: width / 2, y: height / 2 };
+
+/**
+ * Where the rotated shape actually sits, as offsets from the box's own origin.
+ * The size of that footprint doesn't depend on the pivot, but its offset does.
+ */
+export const footprintOffsets = (box: Box, rotation: number, mode: PivotMode = 'center') => {
+    const pivot = pivotOf(box.width, box.height, mode);
+    const r = toRad(rotation);
+    const c = Math.cos(r);
+    const s = Math.sin(r);
+    const corners = [
+        [0, 0],
+        [box.width, 0],
+        [box.width, box.height],
+        [0, box.height],
+    ];
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const [lx, ly] of corners) {
+        const dx = lx - pivot.x;
+        const dy = ly - pivot.y;
+        const rx = pivot.x + dx * c - dy * s;
+        const ry = pivot.y + dx * s + dy * c;
+        minX = Math.min(minX, rx);
+        maxX = Math.max(maxX, rx);
+        minY = Math.min(minY, ry);
+        maxY = Math.max(maxY, ry);
+    }
+    return { minX, minY, maxX, maxY };
+};
+
+/** Re-anchors a resized box so its pivot stays where it was. */
+export const pinPivot = (next: Box, start: Box, mode: PivotMode): Box => {
+    const from = pivotOf(start.width, start.height, mode);
+    const to = pivotOf(next.width, next.height, mode);
+    return { ...next, x: start.x + from.x - to.x, y: start.y + from.y - to.y };
+};
+
 export interface ClampOptions {
     /** Keep width / height locked to this ratio when the shape has to shrink. */
     aspect?: number;
     /** Only trim the width — used when lengthening an arrow must not resize its badge. */
     lockHeight?: boolean;
     minWidth?: number;
+    pivot?: PivotMode;
 }
 
 /**
- * Keeps a shape fully inside the image: shrinks it if its rotated bounding box is
- * larger than the image, then pins the centre so no edge can cross the boundary.
+ * Keeps a shape fully inside the image: shrinks it if its rotated footprint is
+ * larger than the image, then slides it so no edge can cross the boundary.
  */
 export const clampToBounds = (box: Box, rotation: number, bounds: Size, options: ClampOptions = {}): Box => {
     if (bounds.width <= 0 || bounds.height <= 0) return box;
 
-    const { aspect, lockHeight, minWidth = MIN_SIZE } = options;
+    const { aspect, lockHeight, minWidth = MIN_SIZE, pivot = 'center' } = options;
     let { width, height } = box;
-    let cx = box.x + box.width / 2;
-    let cy = box.y + box.height / 2;
 
     let extents = rotatedExtents(width, height, rotation);
     if (lockHeight) {
@@ -123,10 +170,15 @@ export const clampToBounds = (box: Box, rotation: number, bounds: Size, options:
         }
     }
 
-    cx = clamp(cx, extents.hw, bounds.width - extents.hw);
-    cy = clamp(cy, extents.hh, bounds.height - extents.hh);
+    // Shrinking keeps the pivot where it was, so the badge doesn't drift.
+    const resized = pinPivot({ x: box.x, y: box.y, width, height }, box, pivot);
+    const offsets = footprintOffsets(resized, rotation, pivot);
 
-    return { x: cx - width / 2, y: cy - height / 2, width, height };
+    return {
+        ...resized,
+        x: clamp(resized.x, -offsets.minX, bounds.width - offsets.maxX),
+        y: clamp(resized.y, -offsets.minY, bounds.height - offsets.maxY),
+    };
 };
 
 export interface ResizeOptions {

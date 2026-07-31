@@ -4,13 +4,15 @@ interface NumberArrowMarkerProps {
     width: number;
     height: number;
     value: number;
+    /** The parent's rotation, cancelled out on the digit so it reads upright. */
+    rotation: number;
 }
 
 /**
- * A numbered badge with an arrow trailing to the right. The whole marker is
- * rotated by its parent, so the arrow can be aimed anywhere on the screenshot.
+ * A numbered badge with an arrow trailing to the right. The parent rotates the
+ * marker about the badge, so the arrow can be aimed anywhere on the screenshot.
  */
-const NumberArrowMarker = ({ width, height, value }: NumberArrowMarkerProps) => {
+const NumberArrowMarker = ({ width, height, value, rotation }: NumberArrowMarkerProps) => {
     const radius = height / 2;
     const stroke = Math.max(2, height * 0.12);
     const headLength = height * 0.42;
@@ -46,18 +48,20 @@ const NumberArrowMarker = ({ width, height, value }: NumberArrowMarkerProps) => 
                 strokeLinejoin="round"
             />
             <circle cx={badgeCenter} cy={radius} r={radius} fill={ANNOTATION_COLOR} />
-            <text
-                x={badgeCenter}
-                y={radius}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill="#FFFFFF"
-                fontSize={height * 0.6}
-                fontWeight={600}
-                fontFamily="Inter, sans-serif"
-            >
-                {value}
-            </text>
+            <g transform={`rotate(${-rotation} ${badgeCenter} ${radius})`}>
+                <text
+                    x={badgeCenter}
+                    y={radius}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#FFFFFF"
+                    fontSize={height * 0.6}
+                    fontWeight={600}
+                    fontFamily="Inter, sans-serif"
+                >
+                    {value}
+                </text>
+            </g>
         </svg>
     );
 };

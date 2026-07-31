@@ -10,9 +10,12 @@ import {
     MIN_SIZE,
     NUMBER_HANDLES,
     NUMBER_MIN_LENGTH_RATIO,
+    PivotMode,
     clampToBounds,
     defaultBoxFor,
     isLengthHandle,
+    pinPivot,
+    pivotOf,
     resizeBox,
     toLocal,
 } from '@/lib/annotations';
@@ -29,7 +32,7 @@ type Point = { x: number; y: number };
 
 type DragState =
     | { mode: 'create'; id: string; tool: AnnotationTool; origin: Point; moved: boolean }
-    | { mode: 'move'; id: string; grab: Point; start: Box; rotation: number }
+    | { mode: 'move'; id: string; grab: Point; start: Box; rotation: number; pivot: PivotMode }
     | {
           mode: 'resize';
           id: string;
@@ -38,6 +41,7 @@ type DragState =
           origin: Point;
           start: Box;
           rotation: number;
+          pivot: PivotMode;
           /** Locked ratio while resizing (numbered markers from a corner). */
           aspect?: number;
           /** Arrow length only — the badge keeps its size. */
@@ -51,6 +55,7 @@ type DragState =
           start: Box;
           pointerAngle: number;
           startRotation: number;
+          pivot: PivotMode;
       };
 
 const HANDLE_CURSOR: Record<Handle, string> = {
@@ -76,6 +81,9 @@ const HANDLE_POSITION: Record<Handle, { left: string; top: string }> = {
 };
 
 const angleOf = (from: Point, to: Point) => (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+
+/** Numbered markers turn about their badge; boxes about their centre. */
+const pivotModeFor = (type: AnnotationTool): PivotMode => (type === 'number' ? 'badge' : 'center');
 
 interface AnnotationLayerProps {
     controller: AnnotationController;
@@ -154,7 +162,8 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                         y: drag.start.y + (point.y - drag.grab.y),
                     },
                     drag.rotation,
-                    area
+                    area,
+                    { pivot: drag.pivot }
                 );
                 update(drag.id, moved);
                 return;
@@ -165,16 +174,19 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                 // Shift keeps boxes square; numbered markers keep their own ratio from the corners.
                 const square = event.shiftKey && drag.type !== 'number';
                 const aspect = square ? 1 : drag.aspect;
-                const resized = resizeBox(drag.start, drag.rotation, drag.handle, local.x, local.y, {
+                let resized = resizeBox(drag.start, drag.rotation, drag.handle, local.x, local.y, {
                     aspect,
                     minWidth: drag.minWidth,
                 });
+                // A marker grows away from its badge, never dragging the badge along.
+                if (drag.pivot === 'badge') resized = pinPivot(resized, drag.start, 'badge');
                 update(
                     drag.id,
                     clampToBounds(resized, drag.rotation, area, {
                         aspect,
                         lockHeight: drag.lengthOnly,
                         minWidth: drag.minWidth,
+                        pivot: drag.pivot,
                     })
                 );
                 return;
@@ -184,7 +196,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             const rotation = event.shiftKey ? Math.round(raw / 15) * 15 : Math.round(raw);
             const current = annotations.find((a) => a.id === drag.id);
             const box = current ? { x: current.x, y: current.y, width: current.width, height: current.height } : drag.start;
-            update(drag.id, { rotation, ...clampToBounds(box, rotation, area) });
+            update(drag.id, { rotation, ...clampToBounds(box, rotation, area, { pivot: drag.pivot }) });
         };
 
         const handleUp = () => {
@@ -242,7 +254,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             const box = clampToBounds(defaultBoxFor('number', origin, bounds), 0, bounds);
             const id = add({ type: 'number', rotation: 0, number: nextNumber, ...box });
             // Let the user keep dragging to place the marker precisely.
-            dragRef.current = { mode: 'move', id, grab: origin, start: box, rotation: 0 };
+            dragRef.current = { mode: 'move', id, grab: origin, start: box, rotation: 0, pivot: 'badge' };
             return;
         }
 
@@ -260,6 +272,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             grab: pointFrom(event),
             start: { x: annotation.x, y: annotation.y, width: annotation.width, height: annotation.height },
             rotation: annotation.rotation,
+            pivot: pivotModeFor(annotation.type),
         };
     };
 
@@ -278,6 +291,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             origin: pointFrom(event),
             start: { x: annotation.x, y: annotation.y, width: annotation.width, height: annotation.height },
             rotation: annotation.rotation,
+            pivot: pivotModeFor(annotation.type),
             aspect: isNumber && !lengthOnly ? annotation.width / annotation.height : undefined,
             lengthOnly,
             minWidth: isNumber ? annotation.height * NUMBER_MIN_LENGTH_RATIO : MIN_SIZE,
@@ -288,7 +302,9 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
         stop(event);
         controller.select(annotation.id);
         controller.beginGesture();
-        const center = { x: annotation.x + annotation.width / 2, y: annotation.y + annotation.height / 2 };
+        const pivot = pivotModeFor(annotation.type);
+        const local = pivotOf(annotation.width, annotation.height, pivot);
+        const center = { x: annotation.x + local.x, y: annotation.y + local.y };
         dragRef.current = {
             mode: 'rotate',
             id: annotation.id,
@@ -296,6 +312,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             start: { x: annotation.x, y: annotation.y, width: annotation.width, height: annotation.height },
             pointerAngle: angleOf(center, pointFrom(event)),
             startRotation: annotation.rotation,
+            pivot,
         };
     };
 
@@ -329,8 +346,10 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
 
             {annotations.map((annotation) => {
                 const isSelected = annotation.id === selectedId;
-                const handles = annotation.type === 'number' ? NUMBER_HANDLES : ALL_HANDLES;
+                const isNumber = annotation.type === 'number';
+                const handles = isNumber ? NUMBER_HANDLES : ALL_HANDLES;
                 const canRotate = annotation.type !== 'circle';
+                const pivot = pivotOf(annotation.width, annotation.height, pivotModeFor(annotation.type));
 
                 return (
                     <div
@@ -342,21 +361,24 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                             width: annotation.width,
                             height: annotation.height,
                             transform: `rotate(${annotation.rotation}deg)`,
+                            // Markers swing about their badge, boxes about their centre.
+                            transformOrigin: `${pivot.x}px ${pivot.y}px`,
                             pointerEvents: 'auto',
                             cursor: 'move',
                             touchAction: 'none',
                             // Declared on the HTML wrapper as well: html-to-image only
                             // embeds fonts it finds while walking HTML elements.
-                            fontFamily: annotation.type === 'number' ? 'Inter, sans-serif' : undefined,
+                            fontFamily: isNumber ? 'Inter, sans-serif' : undefined,
                         }}
                         onPointerDown={(event) => startMove(event, annotation)}
                         onClick={stop}
                     >
-                        {annotation.type === 'number' ? (
+                        {isNumber ? (
                             <NumberArrowMarker
                                 width={annotation.width}
                                 height={annotation.height}
                                 value={annotation.number ?? 1}
+                                rotation={annotation.rotation}
                             />
                         ) : (
                             <div
