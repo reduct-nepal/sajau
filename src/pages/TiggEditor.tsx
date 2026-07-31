@@ -107,7 +107,7 @@ const TiggEditor = () => {
       />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl flex-grow flex flex-col overflow-auto">
         <header className="mb-6">
-          <Link to="/tigg" className="text-[#143E9F] hover:underline flex items-center text-sm font-medium">
+          <Link to="/tigg" className="text-[#143E9F] hover:underline inline-flex w-fit items-center text-sm font-medium">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Tigg Home
           </Link>
