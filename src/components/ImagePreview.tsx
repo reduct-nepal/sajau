@@ -7,8 +7,10 @@ import { getStyleConfig } from '@/lib/stylePresets';
 import { copyNodeToClipboard } from '@/lib/exportImage';
 import { useAnnotations } from '@/hooks/useAnnotations';
 import { useImageContentRect } from '@/hooks/useImageContentRect';
+import { useEditorShortcuts } from '@/hooks/useEditorShortcuts';
 import AnnotationLayer from '@/components/annotations/AnnotationLayer';
 import AnnotationToolbar from '@/components/annotations/AnnotationToolbar';
+import ShortcutsHelp from '@/components/annotations/ShortcutsHelp';
 
 interface ImagePreviewProps {
     image: string | null;
@@ -31,21 +33,21 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
             reset();
         }, [image, reset]);
 
-        useEffect(() => {
-            const handleKeyDown = async (event: KeyboardEvent) => {
-                if ((event.ctrlKey || event.metaKey) && event.key === 'c' && image && ref && typeof ref !== 'function' && ref.current) {
-                    event.preventDefault();
-                    try {
-                        await copyNodeToClipboard(ref.current);
-                        toast("Image copied to clipboard!");
-                    } catch (err) {
-                        // silent fail
-                    }
-                }
-            };
-            window.addEventListener('keydown', handleKeyDown);
-            return () => window.removeEventListener('keydown', handleKeyDown);
-        }, [image, ref]);
+        const handleCopy = async () => {
+            if (!image || !ref || typeof ref === 'function' || !ref.current) return;
+            try {
+                await copyNodeToClipboard(ref.current);
+                toast("Image copied to clipboard!");
+            } catch (err) {
+                // silent fail
+            }
+        };
+
+        useEditorShortcuts(annotations, {
+            onCopy: handleCopy,
+            onUploadNew: onClick,
+            hasImage: Boolean(image),
+        });
 
         return (
             <div className="flex justify-center items-start gap-4 px-4 md:px-0 w-full">
@@ -96,6 +98,7 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                 </div>
 
                 {image && <AnnotationToolbar controller={annotations} />}
+                {image && <ShortcutsHelp />}
             </div>
         );
     }
