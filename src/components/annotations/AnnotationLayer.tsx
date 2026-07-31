@@ -249,8 +249,10 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
 
     const handleSurfacePointerDown = (event: React.PointerEvent) => {
         stop(event);
-        const { activeTool, select, add, nextNumber } = controller;
-        if (!activeTool) {
+        const { activeTool, selectedId, select, add, nextNumber } = controller;
+        // Clicking off a selected shape only drops the selection — the next click
+        // is the one that adds something, so finishing an edit can't spawn a shape.
+        if (!activeTool || selectedId) {
             select(null);
             return;
         }
