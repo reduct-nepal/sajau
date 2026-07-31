@@ -3,6 +3,7 @@ import { PaddingValue, StylePreset } from '@/pages/Editor';
 import { Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/sonner';
+import { getStyleConfig } from '@/lib/stylePresets';
 import { copyNodeToClipboard } from '@/lib/exportImage';
 import { useAnnotations } from '@/hooks/useAnnotations';
 import { useImageContentRect } from '@/hooks/useImageContentRect';
@@ -16,63 +17,6 @@ interface ImagePreviewProps {
     isDragging: boolean;
     onClick: () => void;
 }
-
-const getStyleConfig = (stylePreset: StylePreset, padding: PaddingValue) => {
-    const paddingValue = parseInt(padding);
-    const containerRadius = paddingValue;
-    let mainRadius, smallerRadius;
-    if (paddingValue === 11) {
-        mainRadius = 11;
-        smallerRadius = 8;
-    } else if (paddingValue === 22) {
-        mainRadius = 22;
-        smallerRadius = 11;
-    } else if (paddingValue === 44) {
-        mainRadius = 44;
-        smallerRadius = 32;
-    } else {
-        mainRadius = paddingValue - 1;
-        smallerRadius = Math.max(0, paddingValue - 5);
-    }
-    switch (stylePreset) {
-        case 'centered':
-            return {
-                containerPadding: padding,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: paddingValue === 11 ? '11px' : paddingValue === 22 ? '11px' : paddingValue === 44 ? '32px' : `${Math.max(0, paddingValue - 4)}px`
-            };
-        case 'top-left':
-            return {
-                containerPadding: `0 ${padding} ${padding} 0`,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${mainRadius}px 0 ${smallerRadius}px 0`
-            };
-        case 'top-right':
-            return {
-                containerPadding: `0 0 ${padding} ${padding}`,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `0 ${mainRadius}px 0 ${smallerRadius}px`
-            };
-        case 'bottom-left':
-            return {
-                containerPadding: `${padding} ${padding} 0 0`,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `0 ${smallerRadius}px 0 ${mainRadius}px`
-            };
-        case 'bottom-right':
-            return {
-                containerPadding: `${padding} 0 0 ${padding}`,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${smallerRadius}px 0 ${mainRadius}px 0`
-            };
-        default:
-            return {
-                containerPadding: padding,
-                containerBorderRadius: `${containerRadius}px`,
-                innerBorderRadius: `${containerRadius - paddingValue}px`
-            };
-    }
-};
 
 const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
     ({ image, padding, stylePreset, isDragging, onClick }, ref) => {
@@ -111,7 +55,7 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
                     onClick={image ? undefined : onClick}
                     className={cn(
                         'bg-branded-bg border border-branded-border transition-all duration-300 ease-in-out hover:shadow-xl shadow-lg',
-                        'max-w-full',
+                        'max-w-full overflow-hidden',
                         !image && 'cursor-pointer',
                         isDragging && 'ring-4 ring-primary/20 border-primary'
                     )}

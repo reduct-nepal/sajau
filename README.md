@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+# Sajau
 
-## Project info
+**Make your screenshots shine with frame.**
 
-**URL**: https://lovable.dev/projects/789f8af6-bc91-4d2a-8678-1673f8fece1b
+Sajau is a browser-based tool for decorating and beautifying screenshots and short animations with clean, branded borders. Upload a PNG, video, or GIF, pick a layout style, and export a polished asset in seconds — all client-side, with no server upload required.
 
-## How can I edit this code?
+**Live site:** [https://sajau.netlify.app/](https://sajau.netlify.app/)
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **PNG export** — Add branded frames to static screenshots and download or copy to clipboard
+- **GIF & video export** — Convert videos (up to 30 seconds) or existing GIFs into branded animations using FFmpeg in the browser
+- **Style presets** — Centered, top-left, top-right, bottom-left, and bottom-right layouts
+- **Padding options** — 11px, 22px, and 44px border sizes with matching rounded corners
+- **Quality presets** — High, balanced, and optimized settings for GIF output (resolution, FPS, and color palette)
+- **Drag, drop, and paste** — Quick upload from the file picker, drag-and-drop, or clipboard paste
+- **Brand variants** — Dedicated routes for partner/product branding (Docs-to-Help, Tigg, Programiz)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/789f8af6-bc91-4d2a-8678-1673f8fece1b) and start prompting.
+## Routes
 
-Changes made via Lovable will be committed automatically to this repo.
+| Path                   | Description                  |
+| ---------------------- | ---------------------------- |
+| `/`                    | Reduct landing page          |
+| `/editor`              | Main editor (PNG by default) |
+| `/editor?format=gif`   | Editor in GIF/video mode     |
+| `/gif-editor`          | Redirects to GIF mode        |
+| `/docs-to-help`        | Docs-to-Help branded landing |
+| `/docs-to-help/editor` | Docs-to-Help editor          |
+| `/tigg`                | Tigg branded landing         |
+| `/tigg/editor`         | Tigg editor                  |
+| `/programiz`           | Programiz branded editor     |
 
-**Use your preferred IDE**
+## Getting started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- npm
 
-Follow these steps:
+### Install and run
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone https://github.com/reduct-nepal/sajau.git
+cd sajau
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The dev server starts with Vite. Open the URL shown in the terminal (typically `http://localhost:5173`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Other scripts
 
-**Use GitHub Codespaces**
+```sh
+npm run build        # Production build
+npm run build:dev    # Development-mode build
+npm run preview      # Preview production build locally
+npm run lint         # Run ESLint
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
+The app is hosted on [Netlify](https://www.netlify.com/) at [https://sajau.netlify.app/](https://sajau.netlify.app/).
 
-This project is built with:
+## How it works
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**PNG mode** renders a live preview with your chosen style preset and exports the framed result using `html-to-image`.
 
-## How can I deploy this project?
+**GIF mode** loads [FFmpeg.wasm](https://ffmpegwasm.netlify.app/) in the browser to transcode uploaded video or GIF input, then applies rounded-corner branding with `gifenc`. Media is validated client-side (max 100 MB; videos max 30 seconds).
 
-Simply open [Lovable](https://lovable.dev/projects/789f8af6-bc91-4d2a-8678-1673f8fece1b) and click on Share -> Publish.
+## Tech stack
 
-## Can I connect a custom domain to my Lovable project?
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- [React Router](https://reactrouter.com/) for routing
+- [FFmpeg.wasm](https://ffmpegwasm.netlify.app/) for in-browser video/GIF conversion
+- [html-to-image](https://github.com/bubkoo/html-to-image) for PNG export
+- [gifenc](https://github.com/mattdesl/gifenc) for GIF post-processing
 
-Yes, you can!
+## Project structure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```
+src/
+├── pages/          # Landing pages and editors
+├── components/     # UI, preview, and control panels
+├── hooks/          # FFmpeg loading and conversion logic
+└── lib/            # Export, styling, and validation utilities
+```
