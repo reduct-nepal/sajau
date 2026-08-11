@@ -119,6 +119,7 @@ const DocsToHelpPreview = forwardRef<HTMLDivElement, DocsToHelpPreviewProps>(
             onCopy: handleCopy,
             onUploadNew: onClick,
             hasImage: Boolean(image),
+            bounds: imageRect,
         });
 
         return (

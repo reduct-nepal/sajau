@@ -47,6 +47,7 @@ const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(
             onCopy: handleCopy,
             onUploadNew: onClick,
             hasImage: Boolean(image),
+            bounds: imageRect,
         });
 
         return (
