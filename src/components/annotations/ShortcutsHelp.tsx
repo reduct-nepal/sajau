@@ -10,6 +10,8 @@ const SHORTCUTS: { keys: string[]; label: string }[] = [
     { keys: ['C'], label: 'Circle tool' },
     { keys: ['R'], label: 'Rectangle tool' },
     { keys: ['A'], label: 'Numbered arrow tool' },
+    { keys: ['P'], label: 'Cursor tool' },
+    { keys: ['H'], label: 'Hand cursor tool' },
     { keys: ['Delete'], label: 'Remove selected shape' },
     { keys: ['Esc'], label: 'Deselect / cancel tool' },
 ];
