@@ -13,7 +13,8 @@ export interface EditorShortcutsOptions {
 /**
  * Global shortcuts for the annotation editor, layered on top of the ones
  * useAnnotations already owns (⌘Z undo, ⇧⌘Z redo, Delete, Esc):
- *   ⌘C copy · ⇧N upload new · C circle · R rectangle · A numbered arrow
+ *   ⌘C copy · ⇧N upload new · C circle · R rectangle · A numbered arrow ·
+ *   P cursor · H hand cursor
  */
 export const useEditorShortcuts = (
     controller: AnnotationController,
@@ -49,6 +50,12 @@ export const useEditorShortcuts = (
             } else if (key === 'a') {
                 event.preventDefault();
                 controller.toggleTool('number');
+            } else if (key === 'p') {
+                event.preventDefault();
+                controller.toggleTool('cursor');
+            } else if (key === 'h') {
+                event.preventDefault();
+                controller.toggleTool('hand');
             }
         };
         window.addEventListener('keydown', handleKeyDown);

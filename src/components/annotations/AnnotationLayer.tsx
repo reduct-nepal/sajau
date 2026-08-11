@@ -22,6 +22,11 @@ import {
 import { AnnotationController } from '@/hooks/useAnnotations';
 import { ContentRect } from '@/hooks/useImageContentRect';
 import NumberArrowMarker from './NumberArrowMarker';
+import CursorMarker from './CursorMarker';
+import HandCursorMarker from './HandCursorMarker';
+
+/** Cursor-like markers that always scale uniformly, never stretch. */
+const isCursorLike = (type: AnnotationTool) => type === 'cursor' || type === 'hand';
 
 const SELECTION_COLOR = '#2F6FED';
 /** Drawn size of a resize handle. */
@@ -177,8 +182,8 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
 
             if (drag.mode === 'resize') {
                 const local = toLocal(point.x - drag.origin.x, point.y - drag.origin.y, drag.rotation);
-                // Shift keeps boxes square; numbered markers keep their own ratio from the corners.
-                const square = event.shiftKey && drag.type !== 'number';
+                // Shift keeps boxes square; numbered markers and cursors keep their own ratio.
+                const square = event.shiftKey && drag.type !== 'number' && !isCursorLike(drag.type);
                 const aspect = square ? 1 : drag.aspect;
                 let resized = resizeBox(drag.start, drag.rotation, drag.handle, local.x, local.y, {
                     aspect,
@@ -300,7 +305,8 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             start: { x: annotation.x, y: annotation.y, width: annotation.width, height: annotation.height },
             rotation: annotation.rotation,
             pivot: pivotModeFor(annotation.type),
-            aspect: isNumber && !lengthOnly ? annotation.width / annotation.height : undefined,
+            // Cursor markers always scale uniformly; a numbered marker only from its corners.
+            aspect: isCursorLike(annotation.type) || (isNumber && !lengthOnly) ? annotation.width / annotation.height : undefined,
             lengthOnly,
             minWidth: isNumber ? annotation.height * NUMBER_MIN_LENGTH_RATIO : MIN_SIZE,
         };
@@ -388,6 +394,10 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
                                 value={annotation.number ?? 1}
                                 rotation={annotation.rotation}
                             />
+                        ) : annotation.type === 'cursor' ? (
+                            <CursorMarker width={annotation.width} height={annotation.height} />
+                        ) : annotation.type === 'hand' ? (
+                            <HandCursorMarker width={annotation.width} height={annotation.height} />
                         ) : (
                             <div
                                 className="absolute inset-0"

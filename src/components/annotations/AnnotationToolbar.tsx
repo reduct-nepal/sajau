@@ -1,4 +1,4 @@
-import { ArrowUpFromDot, Circle, Redo2, Square, Trash2, Undo2 } from 'lucide-react';
+import { ArrowUpFromDot, Circle, Hand, MousePointer2, Redo2, Square, Trash2, Undo2 } from 'lucide-react';
 import { AnnotationTool } from '@/lib/annotations';
 import { AnnotationController } from '@/hooks/useAnnotations';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,8 @@ const TOOLS: { tool: AnnotationTool; label: string; icon: typeof Square }[] = [
     { tool: 'rect', label: 'Rectangle — drag to draw (hold Shift for a square), rotate and resize', icon: Square },
     { tool: 'circle', label: 'Circle — drag to draw (hold Shift for a perfect circle)', icon: Circle },
     { tool: 'number', label: 'Numbered arrow — click to drop 1, 2, 3…, side handles set the length', icon: ArrowUpFromDot },
+    { tool: 'cursor', label: 'Cursor — click to drop a mouse pointer, drag to reposition or rotate', icon: MousePointer2 },
+    { tool: 'hand', label: 'Hand cursor — click to drop a pointing hand, drag to reposition or rotate', icon: Hand },
 ];
 
 const ACTION_CLASS =
