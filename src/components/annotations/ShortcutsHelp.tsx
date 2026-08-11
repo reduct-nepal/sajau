@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 const SHORTCUTS: { keys: string[]; label: string }[] = [
     { keys: ['⌘', 'Z'], label: 'Undo' },
     { keys: ['⇧', '⌘', 'Z'], label: 'Redo' },
-    { keys: ['⌘', 'C'], label: 'Copy image' },
+    { keys: ['⌘', 'C'], label: 'Copy shape (or image, if none selected)' },
+    { keys: ['⌘', 'V'], label: 'Paste shape' },
+    { keys: ['⌥', 'Drag'], label: 'Duplicate shape' },
     { keys: ['⇧', 'N'], label: 'Upload new image' },
     { keys: ['C'], label: 'Circle tool' },
     { keys: ['R'], label: 'Rectangle tool' },

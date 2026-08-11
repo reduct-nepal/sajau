@@ -9,12 +9,13 @@ import {
     Handle,
     MIN_SIZE,
     NUMBER_HANDLES,
-    NUMBER_MIN_LENGTH_RATIO,
     PivotMode,
     clampToBounds,
     defaultBoxFor,
     isLengthHandle,
+    minWidthFor,
     pinPivot,
+    pivotModeFor,
     pivotOf,
     resizeBox,
     toLocal,
@@ -92,9 +93,6 @@ const HANDLE_POSITION: Record<Handle, { left: string; top: string }> = {
 };
 
 const angleOf = (from: Point, to: Point) => (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
-
-/** Numbered markers turn about their badge; boxes about their centre. */
-const pivotModeFor = (type: AnnotationTool): PivotMode => (type === 'number' ? 'badge' : 'center');
 
 interface AnnotationLayerProps {
     controller: AnnotationController;
@@ -277,15 +275,28 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
 
     const startMove = (event: React.PointerEvent, annotation: Annotation) => {
         stop(event);
-        controller.select(annotation.id);
+        let target = annotation;
+        // Alt/Option-drag duplicates the shape in place — same size and rotation —
+        // then drags the copy while the original stays put, Figma-style.
+        if (event.altKey) {
+            const { id, ...rest } = annotation;
+            const newId = controller.add({
+                ...rest,
+                // A duplicated numbered marker gets its own badge, not the original's.
+                number: rest.type === 'number' ? controller.nextNumber : rest.number,
+            });
+            target = { ...rest, id: newId };
+        } else {
+            controller.select(annotation.id);
+        }
         controller.beginGesture();
         dragRef.current = {
             mode: 'move',
-            id: annotation.id,
+            id: target.id,
             grab: pointFrom(event),
-            start: { x: annotation.x, y: annotation.y, width: annotation.width, height: annotation.height },
-            rotation: annotation.rotation,
-            pivot: pivotModeFor(annotation.type),
+            start: { x: target.x, y: target.y, width: target.width, height: target.height },
+            rotation: target.rotation,
+            pivot: pivotModeFor(target.type),
         };
     };
 
@@ -308,7 +319,7 @@ const AnnotationLayer = ({ controller, bounds }: AnnotationLayerProps) => {
             // Cursor markers always scale uniformly; a numbered marker only from its corners.
             aspect: isCursorLike(annotation.type) || (isNumber && !lengthOnly) ? annotation.width / annotation.height : undefined,
             lengthOnly,
-            minWidth: isNumber ? annotation.height * NUMBER_MIN_LENGTH_RATIO : MIN_SIZE,
+            minWidth: minWidthFor(annotation),
         };
     };
 

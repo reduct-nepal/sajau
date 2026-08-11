@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Annotation, AnnotationTool } from '@/lib/annotations';
+import {
+    Annotation,
+    AnnotationTool,
+    PASTE_OFFSET,
+    Size,
+    clampToBounds,
+    minWidthFor,
+    pivotModeFor,
+} from '@/lib/annotations';
 
 let idCounter = 0;
 const nextId = () => `annotation-${++idCounter}`;
@@ -118,6 +126,10 @@ export interface AnnotationController {
     endGesture: () => void;
     /** Keeps annotations aligned when the image is re-laid out (padding, resize). */
     rescale: (ratioX: number, ratioY: number) => void;
+    /** Copies the selected shape onto an internal clipboard; no-ops if nothing is selected. */
+    copySelected: () => void;
+    /** Drops the clipboard's shape nudged from its original spot, clamped to `bounds`. */
+    paste: (bounds: Size) => void;
 }
 
 export const useAnnotations = (): AnnotationController => {
@@ -128,6 +140,10 @@ export const useAnnotations = (): AnnotationController => {
     const pendingCommit = useRef(false);
 
     const annotations = history.present;
+    /** Holds the last copied shape (sans id) between a copy and however many pastes follow. */
+    const clipboardRef = useRef<Omit<Annotation, 'id'> | null>(null);
+    /** Cascades repeated pastes of the same clipboard further from the original each time. */
+    const pasteCountRef = useRef(0);
 
     const nextNumber = useMemo(
         () => annotations.reduce((max, a) => (a.type === 'number' ? Math.max(max, a.number ?? 0) : max), 0) + 1,
@@ -180,6 +196,31 @@ export const useAnnotations = (): AnnotationController => {
         if (!Number.isFinite(ratioX) || !Number.isFinite(ratioY) || ratioX <= 0 || ratioY <= 0) return;
         dispatch({ type: 'rescale', ratioX, ratioY });
     }, []);
+
+    const copySelected = useCallback(() => {
+        const selected = annotations.find((a) => a.id === selectedId);
+        if (!selected) return;
+        const { id, ...rest } = selected;
+        clipboardRef.current = rest;
+        pasteCountRef.current = 0;
+    }, [annotations, selectedId]);
+
+    const paste = useCallback(
+        (bounds: Size) => {
+            const clip = clipboardRef.current;
+            if (!clip) return;
+            pasteCountRef.current += 1;
+            const offset = PASTE_OFFSET * pasteCountRef.current;
+            const box = { x: clip.x + offset, y: clip.y + offset, width: clip.width, height: clip.height };
+            const clamped = clampToBounds(box, clip.rotation, bounds, {
+                pivot: pivotModeFor(clip.type),
+                minWidth: minWidthFor(clip),
+            });
+            // A pasted numbered marker gets its own badge, not a duplicate of the original's.
+            add({ ...clip, ...clamped, number: clip.type === 'number' ? nextNumber : clip.number });
+        },
+        [add, nextNumber]
+    );
 
     // Undo/redo can remove the selected shape.
     useEffect(() => {
@@ -234,5 +275,7 @@ export const useAnnotations = (): AnnotationController => {
         beginGesture,
         endGesture,
         rescale,
+        copySelected,
+        paste,
     };
 };

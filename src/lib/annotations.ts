@@ -94,6 +94,9 @@ export type PivotMode = 'center' | 'badge';
 export const pivotOf = (width: number, height: number, mode: PivotMode = 'center') =>
     mode === 'badge' ? { x: width - height / 2, y: height / 2 } : { x: width / 2, y: height / 2 };
 
+/** Numbered markers turn about their badge; every other shape about its centre. */
+export const pivotModeFor = (type: AnnotationTool): PivotMode => (type === 'number' ? 'badge' : 'center');
+
 /**
  * Where the rotated shape actually sits, as offsets from the box's own origin.
  * The size of that footprint doesn't depend on the pivot, but its offset does.
@@ -267,3 +270,10 @@ export const defaultBoxFor = (tool: AnnotationTool, point: { x: number; y: numbe
 /** Numbered markers stretch lengthwise from their side handles, uniformly from the corners. */
 export const NUMBER_HANDLES: Handle[] = ['nw', 'ne', 'se', 'sw', 'e', 'w'];
 export const isLengthHandle = (handle: Handle) => handle === 'e' || handle === 'w';
+
+/** How far a pasted copy is nudged from the original, so it's never dropped exactly on top. */
+export const PASTE_OFFSET = 20;
+
+/** The minimum width a shape of this type is allowed to shrink to. */
+export const minWidthFor = (annotation: Pick<Annotation, 'type' | 'height'>) =>
+    annotation.type === 'number' ? annotation.height * NUMBER_MIN_LENGTH_RATIO : MIN_SIZE;
