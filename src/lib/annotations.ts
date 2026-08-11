@@ -1,6 +1,6 @@
 export const ANNOTATION_COLOR = '#EC5341';
 
-export type AnnotationTool = 'rect' | 'circle' | 'number';
+export type AnnotationTool = 'rect' | 'circle' | 'number' | 'cursor' | 'hand';
 
 export interface Annotation {
     id: string;
@@ -34,6 +34,12 @@ export const NUMBER_ASPECT = 2.6;
 export const DEFAULT_NUMBER_HEIGHT = 30;
 /** Shortest arrow, as a multiple of the badge size, so the head never eats the badge. */
 export const NUMBER_MIN_LENGTH_RATIO = 1.45;
+/** Width / height of the cursor marker — a classic pointer arrow, taller than wide. */
+export const CURSOR_ASPECT = 0.68;
+export const DEFAULT_CURSOR_HEIGHT = 40;
+/** The hand-pointer marker's source art is a square viewBox. */
+export const HAND_ASPECT = 1;
+export const DEFAULT_HAND_HEIGHT = 44;
 
 export type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
@@ -240,6 +246,18 @@ export const defaultBoxFor = (tool: AnnotationTool, point: { x: number; y: numbe
     if (tool === 'circle') {
         const size = Math.max(MIN_SIZE, Math.min(bounds.width, bounds.height) * 0.22);
         return { x: point.x - size / 2, y: point.y - size / 2, width: size, height: size };
+    }
+    if (tool === 'cursor') {
+        const height = DEFAULT_CURSOR_HEIGHT;
+        const width = height * CURSOR_ASPECT;
+        // Drop the tip under the cursor, same as a real pointer would land.
+        return { x: point.x, y: point.y, width, height };
+    }
+    if (tool === 'hand') {
+        const height = DEFAULT_HAND_HEIGHT;
+        const width = height * HAND_ASPECT;
+        // Centre the hand under the click, same as the arrow cursor's landing spot.
+        return { x: point.x - width / 2, y: point.y - height / 2, width, height };
     }
     const width = Math.max(MIN_SIZE, bounds.width * 0.28);
     const height = Math.max(MIN_SIZE, bounds.height * 0.2);

@@ -33,13 +33,14 @@ const commit = (state: HistoryState, present: Annotation[]): HistoryState => ({
 
 const scale = (annotations: Annotation[], ratioX: number, ratioY: number) => {
     const uniform = Math.min(ratioX, ratioY);
+    const keepsAspect = (type: Annotation['type']) => type === 'number' || type === 'cursor' || type === 'hand';
     return annotations.map((a) => ({
         ...a,
         x: a.x * ratioX,
         y: a.y * ratioY,
-        // Numbered markers keep their aspect ratio, boxes follow the image.
-        width: a.width * (a.type === 'number' ? uniform : ratioX),
-        height: a.height * (a.type === 'number' ? uniform : ratioY),
+        // Numbered markers and cursors keep their aspect ratio, boxes follow the image.
+        width: a.width * (keepsAspect(a.type) ? uniform : ratioX),
+        height: a.height * (keepsAspect(a.type) ? uniform : ratioY),
     }));
 };
 
