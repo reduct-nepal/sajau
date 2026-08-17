@@ -40,8 +40,10 @@ export const useEditorShortcuts = (
                 return;
             }
             if (modifier && !event.shiftKey && key === 'v') {
-                event.preventDefault();
-                controller.paste(bounds);
+                // Only claim the keystroke when a shape was actually pasted — otherwise
+                // let the browser's default paste action through so an image on the
+                // clipboard (e.g. the very first screenshot) still lands in the frame.
+                if (controller.paste(bounds)) event.preventDefault();
                 return;
             }
             if (event.shiftKey && !modifier && key === 'n') {

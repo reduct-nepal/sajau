@@ -128,8 +128,8 @@ export interface AnnotationController {
     rescale: (ratioX: number, ratioY: number) => void;
     /** Copies the selected shape onto an internal clipboard; no-ops if nothing is selected. */
     copySelected: () => void;
-    /** Drops the clipboard's shape nudged from its original spot, clamped to `bounds`. */
-    paste: (bounds: Size) => void;
+    /** Drops the clipboard's shape nudged from its original spot, clamped to `bounds`. Returns false if there was nothing to paste. */
+    paste: (bounds: Size) => boolean;
 }
 
 export const useAnnotations = (): AnnotationController => {
@@ -208,7 +208,7 @@ export const useAnnotations = (): AnnotationController => {
     const paste = useCallback(
         (bounds: Size) => {
             const clip = clipboardRef.current;
-            if (!clip) return;
+            if (!clip) return false;
             pasteCountRef.current += 1;
             const offset = PASTE_OFFSET * pasteCountRef.current;
             const box = { x: clip.x + offset, y: clip.y + offset, width: clip.width, height: clip.height };
@@ -218,6 +218,7 @@ export const useAnnotations = (): AnnotationController => {
             });
             // A pasted numbered marker gets its own badge, not a duplicate of the original's.
             add({ ...clip, ...clamped, number: clip.type === 'number' ? nextNumber : clip.number });
+            return true;
         },
         [add, nextNumber]
     );
